@@ -1,13 +1,13 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { ProductViewer } from "@/components/ProductViewer";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <main className="w-full h-screen overflow-hidden bg-background">
+      <ProductViewer 
+        title="Advanced 3D Product Viewer"
+        description="Professional-grade 3D visualization with PBR materials and real-time rendering"
+      />
+    </main>
   );
 };
 
