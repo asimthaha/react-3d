@@ -149,15 +149,18 @@ export const ProductViewer = ({
             depth: true,
           }}
           onCreated={({ gl }) => {
-            // Handle WebGL context loss
-            gl.canvas.addEventListener("webglcontextlost", (event) => {
-              event.preventDefault();
-              console.warn("WebGL context lost. Attempting to restore...");
-            });
+            // Handle WebGL context loss safely
+            const canvas = gl.domElement;
+            if (canvas) {
+              canvas.addEventListener("webglcontextlost", (event) => {
+                event.preventDefault();
+                console.warn("WebGL context lost. Attempting to restore...");
+              });
 
-            gl.canvas.addEventListener("webglcontextrestored", () => {
-              console.log("WebGL context restored.");
-            });
+              canvas.addEventListener("webglcontextrestored", () => {
+                console.log("WebGL context restored.");
+              });
+            }
           }}
           className="!absolute !inset-0"
         >
