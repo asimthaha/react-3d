@@ -31,15 +31,11 @@ export const DemoModel = ({ viewMode }: DemoModelProps) => {
 
   // Material properties based on view mode
   const getMaterialProps = () => {
-    const baseProps = {
-      roughness: 0.2,
-      metalness: 0.8,
-    };
-
     switch (viewMode) {
       case "wireframe":
         return { 
-          ...baseProps, 
+          roughness: 0.2,
+          metalness: 0.8,
           wireframe: true, 
           transparent: true, 
           opacity: 0.8,
@@ -47,26 +43,30 @@ export const DemoModel = ({ viewMode }: DemoModelProps) => {
         };
       case "solid":
         return { 
-          ...baseProps, 
+          roughness: 0.2,
+          metalness: 0.8,
           color: "#2196f3",
           emissive: "#0d47a1",
           emissiveIntensity: 0.1
         };
       case "textured":
         return { 
-          ...baseProps, 
-          color: "#1976d2",
           roughness: 0.3,
-          metalness: 0.6
+          metalness: 0.6,
+          color: "#1976d2"
         };
       case "normal":
         return { 
-          ...baseProps, 
-          color: "#64b5f6",
-          normalScale: new THREE.Vector2(2, 2)
+          roughness: 0.2,
+          metalness: 0.8,
+          color: "#64b5f6"
         };
       default:
-        return baseProps;
+        return {
+          roughness: 0.2,
+          metalness: 0.8,
+          color: "#2196f3"
+        };
     }
   };
 
@@ -96,8 +96,8 @@ export const DemoModel = ({ viewMode }: DemoModelProps) => {
         <meshStandardMaterial 
           {...materialProps} 
           color={viewMode === "wireframe" ? "#26c6da" : "#0277bd"}
-          emissive={viewMode === "solid" ? "#004d40" : undefined}
-          emissiveIntensity={viewMode === "solid" ? 0.2 : undefined}
+          emissive={viewMode === "solid" ? "#004d40" : "#000000"}
+          emissiveIntensity={viewMode === "solid" ? 0.2 : 0}
         />
       </Sphere>
 
