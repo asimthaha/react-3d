@@ -1,21 +1,80 @@
 import { useRef, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { 
-  OrbitControls, 
-  Environment, 
+import {
+  OrbitControls,
+  Environment,
   PerspectiveCamera,
   useProgress,
   Html,
   ContactShadows,
   Float,
   Text,
-  Sparkles
+  Sparkles,
 } from "@react-three/drei";
-import { EffectComposer, Bloom, DepthOfField, ToneMapping } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  DepthOfField,
+  ToneMapping,
+} from "@react-three/postprocessing";
 import * as THREE from "three";
 import { ViewMode } from "./ProductViewer";
 import { DemoModel } from "./DemoModel";
 import { Hotspots } from "./Hotspots";
+
+// Post-processing effects component with enhanced error handling and logging
+const PostProcessingEffects = () => {
+  const [effectsLoaded, setEffectsLoaded] = useState(false);
+  const [effectErrors, setEffectErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    console.log("Initializing post-processing effects...");
+    setEffectsLoaded(true);
+  }, []);
+
+  if (!effectsLoaded) {
+    console.log("Post-processing effects still loading...");
+    return null;
+  }
+
+  try {
+    console.log("Rendering post-processing effects...");
+    return (
+      <EffectComposer>
+        <Bloom
+          luminanceThreshold={0.2}
+          luminanceSmoothing={0.9}
+          height={300}
+          opacity={0.5}
+        />
+        <DepthOfField focusDistance={0.02} focalLength={0.05} bokehScale={3} />
+        <ToneMapping />
+      </EffectComposer>
+    );
+  } catch (error) {
+    console.error("Post-processing effects failed to load:", error);
+    // Fallback to just Bloom effect
+    try {
+      console.log("Attempting fallback with Bloom only...");
+      return (
+        <EffectComposer>
+          <Bloom
+            luminanceThreshold={0.1}
+            luminanceSmoothing={0.9}
+            height={200}
+            opacity={0.3}
+          />
+        </EffectComposer>
+      );
+    } catch (fallbackError) {
+      console.error(
+        "Fallback post-processing effects also failed:",
+        fallbackError
+      );
+      return null;
+    }
+  }
+};
 
 interface SceneProps {
   viewMode: ViewMode;
@@ -25,12 +84,12 @@ interface SceneProps {
   onFpsChange: (fps: number) => void;
 }
 
-export const Scene = ({ 
-  viewMode, 
-  autoRotate, 
-  modelUrl, 
+export const Scene = ({
+  viewMode,
+  autoRotate,
+  modelUrl,
   onLoadingChange,
-  onFpsChange 
+  onFpsChange,
 }: SceneProps) => {
   const { progress } = useProgress();
   const controlsRef = useRef<any>();
@@ -41,8 +100,8 @@ export const Scene = ({
   // FPS Monitoring
   useFrame((state) => {
     const now = performance.now();
-    setFrameCount(prev => prev + 1);
-    
+    setFrameCount((prev) => prev + 1);
+
     if (now - lastTime >= 1000) {
       const fps = Math.round((frameCount * 1000) / (now - lastTime));
       onFpsChange(fps);
@@ -60,11 +119,19 @@ export const Scene = ({
   useEffect(() => {
     if (modelRef.current) {
       modelRef.current.traverse((child: any) => {
-        if (child.isMesh && child.material && typeof child.material === 'object') {
+        if (
+          child.isMesh &&
+          child.material &&
+          typeof child.material === "object"
+        ) {
           const material = child.material;
-          
+
           // Ensure material has the necessary properties before accessing them
-          if ('wireframe' in material && 'transparent' in material && 'opacity' in material) {
+          if (
+            "wireframe" in material &&
+            "transparent" in material &&
+            "opacity" in material
+          ) {
             switch (viewMode) {
               case "wireframe":
                 material.wireframe = true;
@@ -98,7 +165,7 @@ export const Scene = ({
     <>
       {/* Camera Setup */}
       <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />
-      
+
       {/* Controls */}
       <OrbitControls
         ref={controlsRef}
@@ -129,23 +196,11 @@ export const Scene = ({
         shadow-camera-top={10}
         shadow-camera-bottom={-10}
       />
-      <pointLight
-        position={[-10, 0, -20]}
-        intensity={0.8}
-        color="#4fc3f7"
-      />
-      <pointLight
-        position={[10, -10, 10]}
-        intensity={0.6}
-        color="#29b6f6"
-      />
+      <pointLight position={[-10, 0, -20]} intensity={0.8} color="#4fc3f7" />
+      <pointLight position={[10, -10, 10]} intensity={0.6} color="#29b6f6" />
 
       {/* Environment */}
-      <Environment
-        preset="studio"
-        background={false}
-        blur={0.8}
-      />
+      <Environment preset="studio" background={false} blur={0.8} />
 
       {/* Main Model */}
       <group ref={modelRef}>
@@ -190,20 +245,7 @@ export const Scene = ({
       />
 
       {/* Post-processing Effects */}
-      <EffectComposer>
-        <Bloom
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.9}
-          height={300}
-          opacity={0.5}
-        />
-        <DepthOfField
-          focusDistance={0.02}
-          focalLength={0.05}
-          bokehScale={3}
-        />
-        <ToneMapping adaptive={true} />
-      </EffectComposer>
+      <PostProcessingEffects />
     </>
   );
 };

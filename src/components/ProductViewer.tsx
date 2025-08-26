@@ -8,13 +8,13 @@ import { PerformanceMonitor } from "./PerformanceMonitor";
 import { ScreenshotCapture } from "./ScreenshotCapture";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { 
-  Maximize2, 
-  RotateCcw, 
+import {
+  Maximize2,
+  RotateCcw,
   Camera,
   Settings,
   Eye,
-  EyeOff
+  EyeOff,
 } from "lucide-react";
 
 export type ViewMode = "solid" | "wireframe" | "textured" | "normal";
@@ -25,10 +25,10 @@ interface ProductViewerProps {
   description?: string;
 }
 
-export const ProductViewer = ({ 
-  modelUrl, 
+export const ProductViewer = ({
+  modelUrl,
   title = "3D Product Showcase",
-  description = "Interactive 3D product viewer with advanced controls"
+  description = "Interactive 3D product viewer with advanced controls",
 }: ProductViewerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("solid");
@@ -42,14 +42,14 @@ export const ProductViewer = ({
   const handleScreenshot = useCallback(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
-      const dataURL = canvas.toDataURL('image/png');
-      
+      const dataURL = canvas.toDataURL("image/png");
+
       // Create download link
-      const link = document.createElement('a');
-      link.download = `${title.replace(/\s+/g, '_')}_screenshot.png`;
+      const link = document.createElement("a");
+      link.download = `${title.replace(/\s+/g, "_")}_screenshot.png`;
       link.href = dataURL;
       link.click();
-      
+
       toast.success("Screenshot captured successfully!");
     }
   }, [title]);
@@ -73,16 +73,17 @@ export const ProductViewer = ({
   }, []);
 
   const handleError = useCallback((error: Error, errorInfo: any) => {
-    console.error('3D Viewer Error:', error, errorInfo);
+    console.error("3D Viewer Error:", error, errorInfo);
     setError(error.message);
     toast.error("3D viewer encountered an error. Please refresh the page.");
   }, []);
 
   return (
-    <div className={`relative w-full h-screen viewer-container overflow-hidden ${
-      isFullscreen ? 'fixed inset-0 z-50' : ''
-    }`}>
-      
+    <div
+      className={`relative w-full h-screen viewer-container overflow-hidden ${
+        isFullscreen ? "fixed inset-0 z-50" : ""
+      }`}
+    >
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-20 p-6">
         <div className="glass-strong rounded-2xl p-4">
@@ -99,7 +100,11 @@ export const ProductViewer = ({
                 onClick={() => setShowControls(!showControls)}
                 className="text-muted-foreground hover:text-foreground"
               >
-                {showControls ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showControls ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -132,13 +137,27 @@ export const ProductViewer = ({
             position: [0, 0, 5],
             fov: 50,
             near: 0.1,
-            far: 1000
+            far: 1000,
           }}
           dpr={[1, 2]}
           gl={{
             antialias: true,
             alpha: false,
-            powerPreference: "high-performance"
+            powerPreference: "high-performance",
+            failIfMajorPerformanceCaveat: false,
+            stencil: false,
+            depth: true,
+          }}
+          onCreated={({ gl }) => {
+            // Handle WebGL context loss
+            gl.canvas.addEventListener("webglcontextlost", (event) => {
+              event.preventDefault();
+              console.warn("WebGL context lost. Attempting to restore...");
+            });
+
+            gl.canvas.addEventListener("webglcontextrestored", () => {
+              console.log("WebGL context restored.");
+            });
           }}
           className="!absolute !inset-0"
         >
