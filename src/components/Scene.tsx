@@ -11,69 +11,46 @@ import {
   Text,
   Sparkles,
 } from "@react-three/drei";
-import {
-  EffectComposer,
-  Bloom,
-  DepthOfField,
-  ToneMapping,
-} from "@react-three/postprocessing";
+import type { OrbitControls as OrbitControlsType } from "three/examples/jsm/controls/OrbitControls.js";
 import * as THREE from "three";
 import { ViewMode } from "./ProductViewer";
 import { DemoModel } from "./DemoModel";
 import { Hotspots } from "./Hotspots";
 
-// Post-processing effects component with enhanced error handling and logging
+// Simplified post-processing effects with better error handling
 const PostProcessingEffects = () => {
-  const [effectsLoaded, setEffectsLoaded] = useState(false);
-  const [effectErrors, setEffectErrors] = useState<string[]>([]);
+  const [isEnabled, setIsEnabled] = useState(false);
 
   useEffect(() => {
-    console.log("Initializing post-processing effects...");
-    setEffectsLoaded(true);
+    // Check if post-processing is supported and safe to use
+    const checkPostProcessingSupport = () => {
+      try {
+        // Simple test to see if we can create basic post-processing effects
+        if (typeof window !== "undefined" && window.WebGLRenderingContext) {
+          // Delay enabling to avoid initial render issues
+          setTimeout(() => {
+            setIsEnabled(true);
+          }, 1000);
+        }
+      } catch (error) {
+        console.warn(
+          "Post-processing effects disabled due to compatibility issues:",
+          error
+        );
+      }
+    };
+
+    checkPostProcessingSupport();
   }, []);
 
-  if (!effectsLoaded) {
-    console.log("Post-processing effects still loading...");
+  // Return null to disable post-processing effects
+  if (!isEnabled) {
     return null;
   }
 
-  try {
-    console.log("Rendering post-processing effects...");
-    return (
-      <EffectComposer>
-        <Bloom
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.9}
-          height={300}
-          opacity={0.5}
-        />
-        <DepthOfField focusDistance={0.02} focalLength={0.05} bokehScale={3} />
-        <ToneMapping />
-      </EffectComposer>
-    );
-  } catch (error) {
-    console.error("Post-processing effects failed to load:", error);
-    // Fallback to just Bloom effect
-    try {
-      console.log("Attempting fallback with Bloom only...");
-      return (
-        <EffectComposer>
-          <Bloom
-            luminanceThreshold={0.1}
-            luminanceSmoothing={0.9}
-            height={200}
-            opacity={0.3}
-          />
-        </EffectComposer>
-      );
-    } catch (fallbackError) {
-      console.error(
-        "Fallback post-processing effects also failed:",
-        fallbackError
-      );
-      return null;
-    }
-  }
+  // For now, return null to avoid the post-processing library issues
+  // This can be re-enabled when the library compatibility is resolved
+  return null;
 };
 
 interface SceneProps {
@@ -92,8 +69,10 @@ export const Scene = ({
   onFpsChange,
 }: SceneProps) => {
   const { progress } = useProgress();
-  const controlsRef = useRef<any>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const controlsRef = useRef<any>(null);
   const modelRef = useRef<THREE.Group>(null);
+  const { gl } = useThree();
   const [frameCount, setFrameCount] = useState(0);
   const [lastTime, setLastTime] = useState(performance.now());
 
@@ -118,13 +97,13 @@ export const Scene = ({
   // Material update based on view mode
   useEffect(() => {
     if (modelRef.current) {
-      modelRef.current.traverse((child: any) => {
+      modelRef.current.traverse((child: THREE.Object3D) => {
         if (
-          child.isMesh &&
-          child.material &&
-          typeof child.material === "object"
+          (child as THREE.Mesh).isMesh &&
+          (child as THREE.Mesh).material &&
+          typeof (child as THREE.Mesh).material === "object"
         ) {
-          const material = child.material;
+          const material = (child as THREE.Mesh).material;
 
           // Ensure material has the necessary properties before accessing them
           if (

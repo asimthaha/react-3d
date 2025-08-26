@@ -38,6 +38,7 @@ export const ProductViewer = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fps, setFps] = useState(60);
+  const [webglError, setWebglError] = useState<string | null>(null);
 
   const handleScreenshot = useCallback(() => {
     if (canvasRef.current) {
@@ -72,11 +73,14 @@ export const ProductViewer = ({
     toast.success("View reset to default");
   }, []);
 
-  const handleError = useCallback((error: Error, errorInfo: any) => {
-    console.error("3D Viewer Error:", error, errorInfo);
-    setError(error.message);
-    toast.error("3D viewer encountered an error. Please refresh the page.");
-  }, []);
+  const handleError = useCallback(
+    (error: Error, errorInfo: { componentStack: string }) => {
+      console.error("3D Viewer Error:", error, errorInfo);
+      setError(error.message);
+      toast.error("3D viewer encountered an error. Please refresh the page.");
+    },
+    []
+  );
 
   return (
     <div
@@ -139,27 +143,59 @@ export const ProductViewer = ({
             near: 0.1,
             far: 1000,
           }}
-          dpr={[1, 2]}
+          dpr={Math.min(window.devicePixelRatio, 2)} // Limit DPR for better performance
           gl={{
-            antialias: true,
+            antialias:
+              navigator.hardwareConcurrency &&
+              navigator.hardwareConcurrency > 4, // Disable antialias on low-end devices
             alpha: false,
-            powerPreference: "high-performance",
+            powerPreference: "default", // Changed from high-performance for better compatibility
             failIfMajorPerformanceCaveat: false,
             stencil: false,
             depth: true,
+            preserveDrawingBuffer: true, // Helps with context loss recovery
           }}
-          onCreated={({ gl }) => {
-            // Handle WebGL context loss safely
+          onCreated={({ gl, scene, camera }) => {
+            // Enhanced WebGL context loss handling
             const canvas = gl.domElement;
             if (canvas) {
               canvas.addEventListener("webglcontextlost", (event) => {
                 event.preventDefault();
                 console.warn("WebGL context lost. Attempting to restore...");
+                setWebglError("WebGL context lost. Attempting to restore...");
+                // Force re-render after context loss
+                setTimeout(() => {
+                  gl.compile(scene, camera);
+                  setWebglError(null);
+                }, 100);
               });
 
               canvas.addEventListener("webglcontextrestored", () => {
-                console.log("WebGL context restored.");
+                console.log("WebGL context restored successfully.");
+                setWebglError(null);
+                toast.success("3D viewer restored successfully!");
               });
+
+              // Handle WebGL errors and check capabilities
+              try {
+                const context = gl.getContext();
+                if (context) {
+                  context.getExtension("WEBGL_debug_renderer_info");
+                  context.getError(); // Clear any existing errors
+                }
+
+                // Check WebGL capabilities
+                const maxTextureSize = gl.capabilities.maxTextureSize;
+                if (maxTextureSize < 1024) {
+                  console.warn(
+                    "Low WebGL texture size limit detected:",
+                    maxTextureSize
+                  );
+                }
+              } catch (error) {
+                console.warn("WebGL capability check failed:", error);
+                setWebglError("WebGL initialization issue detected");
+              }
             }
           }}
           className="!absolute !inset-0"
@@ -178,6 +214,18 @@ export const ProductViewer = ({
 
       {/* Loading Overlay */}
       {loading && <LoadingProgress />}
+
+      {/* WebGL Error Overlay */}
+      {webglError && (
+        <div className="absolute top-20 left-6 z-30">
+          <div className="glass p-4 rounded-2xl border border-orange-500/20 bg-orange-500/10">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+              <p className="text-sm text-orange-200">{webglError}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Controls Panel */}
       {showControls && (
