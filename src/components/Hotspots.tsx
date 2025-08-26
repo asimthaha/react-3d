@@ -99,22 +99,14 @@ const Hotspot = ({ hotspot }: { hotspot: HotspotData }) => {
 
       {/* Connecting Line */}
       {(hovered || clicked) && (
-        <line>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              array={new Float32Array([0, 0, 0, 0, 0.3, 0])}
-              count={2}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <lineBasicMaterial
+        <mesh>
+          <cylinderGeometry args={[0.002, 0.002, 0.3]} />
+          <meshBasicMaterial
             color={hotspot.color || "#4fc3f7"}
             transparent
             opacity={0.6}
-            linewidth={2}
           />
-        </line>
+        </mesh>
       )}
     </group>
   );

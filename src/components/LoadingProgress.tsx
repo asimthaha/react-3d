@@ -3,7 +3,9 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 
 export const LoadingProgress = () => {
-  const { progress, active } = useProgress();
+  const progressData = useProgress();
+  const progress = progressData?.progress || 0;
+  const active = progressData?.active || false;
 
   if (!active) return null;
 

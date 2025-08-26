@@ -60,34 +60,35 @@ export const Scene = ({
   useEffect(() => {
     if (modelRef.current) {
       modelRef.current.traverse((child: any) => {
-        if (child.isMesh && child.material) {
+        if (child.isMesh && child.material && typeof child.material === 'object') {
           const material = child.material;
           
-          switch (viewMode) {
-            case "wireframe":
-              material.wireframe = true;
-              material.transparent = true;
-              material.opacity = 0.8;
-              break;
-            case "solid":
-              material.wireframe = false;
-              material.transparent = false;
-              material.opacity = 1;
-              break;
-            case "textured":
-              material.wireframe = false;
-              material.transparent = false;
-              material.opacity = 1;
-              // Apply textures if available
-              break;
-            case "normal":
-              // Show normal visualization
-              material.wireframe = false;
-              material.transparent = false;
-              material.opacity = 1;
-              break;
+          // Ensure material has the necessary properties before accessing them
+          if ('wireframe' in material && 'transparent' in material && 'opacity' in material) {
+            switch (viewMode) {
+              case "wireframe":
+                material.wireframe = true;
+                material.transparent = true;
+                material.opacity = 0.8;
+                break;
+              case "solid":
+                material.wireframe = false;
+                material.transparent = false;
+                material.opacity = 1;
+                break;
+              case "textured":
+                material.wireframe = false;
+                material.transparent = false;
+                material.opacity = 1;
+                break;
+              case "normal":
+                material.wireframe = false;
+                material.transparent = false;
+                material.opacity = 1;
+                break;
+            }
+            material.needsUpdate = true;
           }
-          material.needsUpdate = true;
         }
       });
     }
